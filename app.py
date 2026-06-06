@@ -191,9 +191,18 @@ if st.session_state.data_loaded:
                 "비고": s.get("warning") or s.get("error") or "",
             })
         st.dataframe(pd.DataFrame(rows), use_container_width=True)
+    # 중요: st.selectbox options에는 DataFrame을 포함한 dict 객체를 직접 넣지 않는다.
+    # Streamlit은 widget 변경 여부를 old_value != new_value로 비교하는데,
+    # dict 내부에 pandas DataFrame이 있으면 ValueError: truth value of a DataFrame is ambiguous가 발생한다.
+    # 따라서 widget 값은 문자열 ticker만 사용하고, 실제 stock dict는 별도 매핑에서 조회한다.
+    stock_by_ticker = {s.get("ticker"): s for s in stocks}
+    ticker_options = [s.get("ticker") for s in stocks if s.get("ticker")]
+    ticker_label = lambda t: f"{stock_by_ticker[t].get('name')} ({t})" if t in stock_by_ticker else str(t)
+
     with tabs[1]:
-        selected = st.selectbox("종목 선택", options=stocks, format_func=lambda s: f"{s.get('name')} ({s.get('ticker')})")
-        nd = news_data.get(selected["ticker"], {})
+        selected_ticker = st.selectbox("종목 선택", options=ticker_options, format_func=ticker_label, key="news_stock_select")
+        selected = stock_by_ticker.get(selected_ticker, {})
+        nd = news_data.get(selected_ticker, {})
         c1, c2 = st.columns(2)
         for col, title, items in [(c1, "🇰🇷 국내 뉴스", nd.get("domestic", [])), (c2, "🌐 해외 뉴스(번역)", nd.get("international", []))]:
             with col:
@@ -201,7 +210,8 @@ if st.session_state.data_loaded:
                 for item in items[:10]:
                     st.markdown(f"<div class='news-item'><a href='{item.get('link','')}' target='_blank'>{item.get('title','')}</a><div class='news-source'>{item.get('source','')} · {item.get('published','')}</div></div>", unsafe_allow_html=True)
     with tabs[2]:
-        selected = st.selectbox("차트 종목", options=stocks, format_func=lambda s: f"{s.get('name')} ({s.get('ticker')})", key="chart_select")
+        selected_ticker = st.selectbox("차트 종목", options=ticker_options, format_func=ticker_label, key="chart_stock_select")
+        selected = stock_by_ticker.get(selected_ticker, {})
         period = st.radio("기간", ["week", "month", "6month"], format_func=lambda p: {"week":"이번주", "month":"이번달", "6month":"6개월"}[p], horizontal=True)
         df = selected.get("history", {}).get(period)
         if df is not None and not df.empty:
