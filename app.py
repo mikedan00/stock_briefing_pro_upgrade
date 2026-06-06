@@ -15,6 +15,8 @@ import plotly.graph_objects as go
 import streamlit as st
 
 st.set_page_config(page_title="주식 AI 브리핑 PRO", page_icon="📊", layout="wide", initial_sidebar_state="expanded")
+APP_BUILD = "2026-06-06-v3-widget-key-reset"
+# v3: Streamlit widget state 충돌 방지용. dict/DataFrame 값을 widget option으로 쓰던 이전 세션과 충돌하지 않도록 key를 변경했다.
 
 st.markdown("""
 <style>
@@ -200,7 +202,7 @@ if st.session_state.data_loaded:
     ticker_label = lambda t: f"{stock_by_ticker[t].get('name')} ({t})" if t in stock_by_ticker else str(t)
 
     with tabs[1]:
-        selected_ticker = st.selectbox("종목 선택", options=ticker_options, format_func=ticker_label, key="news_stock_select")
+        selected_ticker = st.selectbox("종목 선택", options=ticker_options, format_func=ticker_label, key="news_stock_select_ticker_v3")
         selected = stock_by_ticker.get(selected_ticker, {})
         nd = news_data.get(selected_ticker, {})
         c1, c2 = st.columns(2)
@@ -210,9 +212,9 @@ if st.session_state.data_loaded:
                 for item in items[:10]:
                     st.markdown(f"<div class='news-item'><a href='{item.get('link','')}' target='_blank'>{item.get('title','')}</a><div class='news-source'>{item.get('source','')} · {item.get('published','')}</div></div>", unsafe_allow_html=True)
     with tabs[2]:
-        selected_ticker = st.selectbox("차트 종목", options=ticker_options, format_func=ticker_label, key="chart_stock_select")
+        selected_ticker = st.selectbox("차트 종목", options=ticker_options, format_func=ticker_label, key="chart_stock_select_ticker_v3")
         selected = stock_by_ticker.get(selected_ticker, {})
-        period = st.radio("기간", ["week", "month", "6month"], format_func=lambda p: {"week":"이번주", "month":"이번달", "6month":"6개월"}[p], horizontal=True)
+        period = st.radio("기간", ["week", "month", "6month"], format_func=lambda p: {"week":"이번주", "month":"이번달", "6month":"6개월"}[p], horizontal=True, key="chart_period_v3")
         df = selected.get("history", {}).get(period)
         if df is not None and not df.empty:
             fig = go.Figure()

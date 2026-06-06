@@ -73,3 +73,17 @@ GMAIL_APP_PASSWORD = "xxxx xxxx xxxx xxxx"
 - HWP 구버전은 파일 내부 `PrvText`가 있을 때만 안정적으로 텍스트 추출됩니다. HWPX/PDF/DOCX 변환 업로드가 더 정확합니다.
 - 이미지 OCR은 서버에 OCR 엔진이 있을 때만 동작합니다. Streamlit Cloud에서는 이미지의 핵심 텍스트를 별도 입력란에 붙여넣는 것을 권장합니다.
 - 본 앱의 리포트는 투자 참고용이며 최종 투자 판단은 사용자 책임입니다.
+
+## v3 수정 사항: Streamlit widget state 오류 방지
+
+이 버전은 이전 배포본에서 `st.selectbox`의 option 값으로 DataFrame이 포함된 dict가 들어가면서 발생할 수 있는 `ValueError: The truth value of a DataFrame is ambiguous` 문제를 방지합니다.
+
+수정 내용:
+- `selectbox` option에는 ticker 문자열만 사용합니다.
+- 실제 stock dict/DataFrame은 `stock_by_ticker` 매핑에서 조회합니다.
+- 기존 브라우저 세션에 남아 있던 widget state와 충돌하지 않도록 widget key를 `*_v3`로 변경했습니다.
+
+Streamlit Cloud에서 기존 오류 화면이 계속 보이면:
+1. GitHub에 v3 파일을 push합니다.
+2. Streamlit Cloud `Manage app → Reboot app`을 실행합니다.
+3. 브라우저에서 강력 새로고침 `Ctrl + F5` 또는 새 시크릿 창으로 접속합니다.
