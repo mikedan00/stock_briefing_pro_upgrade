@@ -87,3 +87,16 @@ Streamlit Cloud에서 기존 오류 화면이 계속 보이면:
 1. GitHub에 v3 파일을 push합니다.
 2. Streamlit Cloud `Manage app → Reboot app`을 실행합니다.
 3. 브라우저에서 강력 새로고침 `Ctrl + F5` 또는 새 시크릿 창으로 접속합니다.
+
+## v5 해외뉴스 수집 개선
+
+v5에서는 국내 종목의 해외뉴스 수집을 다음 순서로 수행합니다.
+
+1. 국내 종목코드가 6자리이면 Yahoo Finance 티커를 먼저 생성합니다.
+   - 삼성전자: `005930.KS`, 보조 후보 `SSNLF`, `SSUN.F`
+   - SK하이닉스: `000660.KS`, 보조 후보 `HXSCF`
+2. yfinance `Ticker(...).news`로 Yahoo Finance 뉴스부터 수집합니다.
+3. 영어 회사명으로 Google News EN RSS를 검색합니다.
+   - 예: `Samsung Electronics`, `Samsung Electronics semiconductor`, `Samsung Electronics earnings`
+4. 해외뉴스 제목/요약은 한국어 번역 결과를 기본 표시하고, 원문 제목도 함께 보존합니다.
+5. 해외뉴스가 비면 수집 진단 JSON에서 시도한 Yahoo ticker와 Google query별 결과 수를 확인할 수 있습니다.

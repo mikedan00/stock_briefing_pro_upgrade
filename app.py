@@ -15,8 +15,8 @@ import plotly.graph_objects as go
 import streamlit as st
 
 st.set_page_config(page_title="주식 AI 브리핑 PRO", page_icon="📊", layout="wide", initial_sidebar_state="expanded")
-APP_BUILD = "2026-06-06-v3-widget-key-reset"
-# v3: Streamlit widget state 충돌 방지용. dict/DataFrame 값을 widget option으로 쓰던 이전 세션과 충돌하지 않도록 key를 변경했다.
+APP_BUILD = "2026-06-07-v5-yahoo-english-news-fix"
+# v5: 해외뉴스는 Yahoo Finance 티커(005930.KS)와 영어 회사명(Samsung Electronics)을 최우선 사용하고, 모든 해외뉴스 제목/요약을 한국어 번역한다.
 
 st.markdown("""
 <style>
@@ -202,19 +202,27 @@ if st.session_state.data_loaded:
     ticker_label = lambda t: f"{stock_by_ticker[t].get('name')} ({t})" if t in stock_by_ticker else str(t)
 
     with tabs[1]:
-        selected_ticker = st.selectbox("종목 선택", options=ticker_options, format_func=ticker_label, key="news_stock_select_ticker_v3")
+        selected_ticker = st.selectbox("종목 선택", options=ticker_options, format_func=ticker_label, key="news_stock_select_ticker_v5")
         selected = stock_by_ticker.get(selected_ticker, {})
         nd = news_data.get(selected_ticker, {})
         c1, c2 = st.columns(2)
         for col, title, items in [(c1, "🇰🇷 국내 뉴스", nd.get("domestic", [])), (c2, "🌐 해외 뉴스(번역)", nd.get("international", []))]:
             with col:
                 st.markdown(f"### {title}")
+                if not items:
+                    st.warning("수집된 뉴스가 없습니다. 검색어/날짜 조건 또는 외부 뉴스 RSS 응답이 비어 있을 수 있습니다.")
+                    if title.startswith("🌐") and nd.get("debug"):
+                        with st.expander("해외뉴스 수집 진단 보기"):
+                            st.json(nd.get("debug"))
                 for item in items[:10]:
-                    st.markdown(f"<div class='news-item'><a href='{item.get('link','')}' target='_blank'>{item.get('title','')}</a><div class='news-source'>{item.get('source','')} · {item.get('published','')}</div></div>", unsafe_allow_html=True)
+                    
+                    original = item.get('original_title') or ''
+                    original_html = f"<div style='font-size:.72rem;color:#78909c;margin-top:3px;'>원문: {original}</div>" if original and original != item.get('title','') else ""
+                    st.markdown(f"<div class='news-item'><a href='{item.get('link','')}' target='_blank'>{item.get('title','')}</a><div class='news-source'>{item.get('source','')} · {item.get('published','')}</div>{original_html}</div>", unsafe_allow_html=True)
     with tabs[2]:
-        selected_ticker = st.selectbox("차트 종목", options=ticker_options, format_func=ticker_label, key="chart_stock_select_ticker_v3")
+        selected_ticker = st.selectbox("차트 종목", options=ticker_options, format_func=ticker_label, key="chart_stock_select_ticker_v5")
         selected = stock_by_ticker.get(selected_ticker, {})
-        period = st.radio("기간", ["week", "month", "6month"], format_func=lambda p: {"week":"이번주", "month":"이번달", "6month":"6개월"}[p], horizontal=True, key="chart_period_v3")
+        period = st.radio("기간", ["week", "month", "6month"], format_func=lambda p: {"week":"이번주", "month":"이번달", "6month":"6개월"}[p], horizontal=True, key="chart_period_v5")
         df = selected.get("history", {}).get(period)
         if df is not None and not df.empty:
             fig = go.Figure()
